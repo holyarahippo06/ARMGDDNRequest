@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.6.4
+// @version      2.6.5
 // @description  Game Request Form for ARMGDDN Games on Steam
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
@@ -22,6 +22,10 @@
 
         return {
             DENUVO_MESSAGE: "This Game has Denuvo Anti-Temper and cannot be requested.",
+            KLA_MESSAGE: "This Game has Kernel Level Anti-Cheat and cannot be requested.",
+            ROCKSTAR_MESSAGE: "This Game has Rockstar's DRM and cannot be requested.",
+            SECUROM_MESSAGE: "This Game has SecuROM DRM and cannot be requested.",
+            NOTSINGLEPLAYER_MESSAGE: "This Game is Online-Only and cannot be requested.",
             FORM_CONTAINER_ID: "steam-request-helper",
             TELEGRAM_INPUT_ID: "srh-telegram-input",
             SUBMIT_BUTTON_ID: "srh-submit-button",
@@ -30,7 +34,8 @@
             GOOGLE_FORMS_URL: hexToString([0x68,0x74,0x74,0x70,0x73,0x3a,0x2f,0x2f,0x64,0x6f,0x63,0x73,0x2e,0x67,0x6f,0x6f,0x67,0x6c,0x65,0x2e,0x63,0x6f,0x6d,0x2f,0x66,0x6f,0x72,0x6d,0x73,0x2f,0x64,0x2f,0x65,0x2f,0x31,0x46,0x41,0x49,0x70,0x51,0x4c,0x53,0x65,0x62,0x59,0x4f,0x44,0x48,0x74,0x49,0x43,0x35,0x6a,0x45,0x77,0x67,0x6f,0x69,0x38,0x79,0x56,0x56,0x53,0x6f,0x6c,0x35,0x48,0x65,0x37,0x62,0x79,0x5a,0x4e,0x61,0x51,0x6b,0x34,0x71,0x64,0x44,0x4c,0x49,0x4e,0x4d,0x7a,0x66,0x66,0x6d,0x55,0x51,0x2f,0x66,0x6f,0x72,0x6d,0x52,0x65,0x73,0x70,0x6f,0x6e,0x73,0x65]),
             RENTRY_URLS: {
                 PC: hexToString([0x68,0x74,0x74,0x70,0x73,0x3a,0x2f,0x2f,0x72,0x65,0x6e,0x74,0x72,0x79,0x2e,0x63,0x6f,0x2f,0x63,0x75,0x72,0x72,0x65,0x6e,0x74,0x73,0x65,0x72,0x76,0x65,0x72,0x70,0x63,0x2f,0x72,0x61,0x77]),
-                PCVR: hexToString([0x68,0x74,0x74,0x70,0x73,0x3a,0x2f,0x2f,0x72,0x65,0x6e,0x74,0x72,0x79,0x2e,0x63,0x6f,0x2f,0x63,0x75,0x72,0x72,0x65,0x6e,0x74,0x73,0x65,0x72,0x76,0x65,0x72,0x70,0x63,0x76,0x72,0x2f,0x72,0x61,0x77])
+                PCVR: hexToString([0x68,0x74,0x74,0x70,0x73,0x3a,0x2f,0x2f,0x72,0x65,0x6e,0x74,0x72,0x79,0x2e,0x63,0x6f,0x2f,0x63,0x75,0x72,0x72,0x65,0x6e,0x74,0x73,0x65,0x72,0x76,0x65,0x72,0x70,0x63,0x76,0x72,0x2f,0x72,0x61,0x77]),
+                BLOCKED: hexToString([0x68,0x74,0x74,0x70,0x73,0x3a,0x2f,0x2f,0x72,0x65,0x6e,0x74,0x72,0x79,0x2e,0x63,0x6f,0x2f,0x61,0x67,0x72,0x62,0x6c,0x2f,0x72,0x61,0x77])
             },
             FORM_FIELDS: {
                 telegram: "entry.1070598941",
@@ -91,6 +96,41 @@
                     background-color: rgba(255, 77, 77, 0.1);
                     border-radius: 3px;
                 }
+                #steam-request-helper .kla-blocked {
+                    color: #ff4d4d;
+                    font-weight: bold;
+                    padding: 10px;
+                    background-color: rgba(255, 77, 77, 0.1);
+                    border-radius: 3px;
+                }
+                #steam-request-helper .rockstar-blocked {
+                    color: #ff4d4d;
+                    font-weight: bold;
+                    padding: 10px;
+                    background-color: rgba(255, 77, 77, 0.1);
+                    border-radius: 3px;
+                }
+                #steam-request-helper .securom-blocked {
+                    color: #ff4d4d;
+                    font-weight: bold;
+                    padding: 10px;
+                    background-color: rgba(255, 77, 77, 0.1);
+                    border-radius: 3px;
+                }
+                #steam-request-helper .notsingleplayer-blocked {
+                    color: #ff4d4d;
+                    font-weight: bold;
+                    padding: 10px;
+                    background-color: rgba(255, 77, 77, 0.1);
+                    border-radius: 3px;
+                }
+                #steam-request-helper .game-blocked {
+                    color: #ff4d4d;
+                    font-weight: bold;
+                    padding: 10px;
+                    background-color: rgba(255, 77, 77, 0.1);
+                    border-radius: 3px;
+                }
                 #steam-request-helper .error-message {
                     color: #ff4d4d;
                     font-size: 0.9em;
@@ -105,6 +145,73 @@
         };
     })();
 
+    // Cache System
+    const RentryCache = {
+        get: (url) => {
+            const key = `rentry_${btoa(url)}`;
+            const cached = localStorage.getItem(key);
+            if (!cached) return null;
+            const { data, timestamp } = JSON.parse(cached);
+            return (Date.now() - timestamp < 21600000) ? data : null; // 6-hour cache
+        },
+        set: (url, data) => {
+            const key = `rentry_${btoa(url)}`;
+            localStorage.setItem(key, JSON.stringify({
+                data,
+                timestamp: Date.now()
+            }));
+        },
+        clear: (url) => {
+            const key = `rentry_${btoa(url)}`;
+            localStorage.removeItem(key);
+        }
+    };
+
+    const activeRequests = new Map();
+
+    async function cachedFetchWithRetry(url, retries = 3) {
+        // Return cached data if available
+        const cached = RentryCache.get(url);
+        if (cached) return cached;
+
+        // Dedupe simultaneous requests
+        if (activeRequests.has(url)) return activeRequests.get(url);
+
+        const fetchPromise = new Promise(async (resolve) => {
+            let result;
+            for (let attempt = 1; attempt <= retries; attempt++) {
+                try {
+                    const response = await new Promise((resolve, reject) => {
+                        GM_xmlhttpRequest({
+                            method: "GET",
+                            url,
+                            headers: { "rentry-auth": CONFIG.RENTRY_AUTH_TOKEN },
+                            onload: res => res.status === 200 ? resolve(res.responseText) : reject(res.status),
+                            onerror: reject
+                        });
+                    });
+
+                    RentryCache.set(url, response);
+                    result = response;
+                    break;
+                } catch (error) {
+                    console.warn(`Attempt ${attempt} failed for ${url}:`, error);
+                    if (attempt === retries) {
+                        result = RentryCache.get(url); // Fallback to stale cache
+                        break;
+                    }
+                    await new Promise(r => setTimeout(r, 2000 * attempt)); // Exponential backoff
+                }
+            }
+            activeRequests.delete(url);
+            resolve(result || null);
+        });
+
+        activeRequests.set(url, fetchPromise);
+        return fetchPromise;
+    }
+
+
     // Add styles
     const style = document.createElement('style');
     style.textContent = CONFIG.STYLES;
@@ -118,11 +225,50 @@
         );
     }
 
-    function isVROnlyGame() {
+    function hasKernelAntiCheat() {
+        const drmNotices = document.querySelectorAll('.DRM_notice');
+        return Array.from(drmNotices).some(notice => {
+            const text = notice.textContent.toLowerCase();
+            return text.includes('kernel level anti-cheat');
+        });
+    }
+
+    function hasRockstarDRM() {
+        const drmNotices = document.querySelectorAll('.DRM_notice');
+        return Array.from(drmNotices).some(notice => {
+            const text = notice.textContent.toLowerCase();
+            return text.includes('rockstar games');
+        });
+    }
+
+    function hasSecurom() {
+        const drmNotices = document.querySelectorAll('.DRM_notice');
+        return Array.from(drmNotices).some(notice => {
+            const text = notice.textContent.toLowerCase();
+            return text.includes('securom');
+        });
+    }
+
+    function hasSP() {
+        const spLabel = document.querySelectorAll('.game_area_details_specs_ctn .label');
+        return Array.from(spLabel).some(label => {
+            const text = label.textContent.toLowerCase();
+            return text.includes('single-player');
+        });
+    }
+
+    function isVRGame() {
         const vrLabels = document.querySelectorAll('.game_area_details_specs_ctn .label');
-        return Array.from(vrLabels).some(label =>
-            label.textContent.trim() === 'VR Only'
-        );
+        console.log("VR Labels found:", vrLabels.length);
+
+        const isVR = Array.from(vrLabels).some(label => {
+            const text = label.textContent.trim().toLowerCase();
+            console.log("Checking label:", text);
+            return text.includes('vr only') || text.includes('vr supported');
+        });
+
+        console.log("Final VR Check Result:", isVR);
+        return isVR;
     }
 
     function getGameTitle() {
@@ -133,6 +279,44 @@
         // Fallback to appHubAppName
         const titleElement = document.getElementById('appHubAppName');
         return titleElement?.textContent.trim() || "Unknown Title";
+    }
+
+    async function checkBlockedList() {
+        const gameTitle = getGameTitle();
+        const gameTitleLow = gameTitle.toLowerCase()
+
+        try {
+            const blockedList = await cachedFetchWithRetry(CONFIG.RENTRY_URLS.BLOCKED);
+            const blockedEntries = blockedList.split('\n').filter(e => e.trim());
+
+            const isBlocked = blockedEntries.some(entry => {
+                const cleanEntry = entry.trim().toLowerCase();
+
+                // Exact match syntax: ^game title$
+                if (cleanEntry.startsWith('^') && cleanEntry.endsWith('$')) {
+                    const exactMatch = cleanEntry.slice(1, -1);
+                    return gameTitleLow === exactMatch;
+                }
+
+                // Series match (partial contains)
+                return gameTitleLow.includes(cleanEntry);
+            });
+
+            return {
+                isBlocked,
+                gameTitle: gameTitle,
+                message: isBlocked
+                    ? `"${gameTitle}" is blocked from requests`
+                    : `"${gameTitle}" is not blocked`
+            };
+        } catch (error) {
+            console.error("Blocked list check failed:", error);
+            return {
+                isBlocked: false,
+                gameTitle: gameTitle,
+                message: "Block list unavailable - allowing submission"
+            };
+        }
     }
 
     function getAppId() {
@@ -148,29 +332,20 @@
     }
 
     async function checkGameStatus(appId, isVR) {
-        const url = isVR ? CONFIG.RENTRY_URLS.PCVR : CONFIG.RENTRY_URLS.PC;
+        try {
+            const [pcList, pcvrList] = await Promise.all([
+                cachedFetchWithRetry(CONFIG.RENTRY_URLS.PC),
+                cachedFetchWithRetry(CONFIG.RENTRY_URLS.PCVR)
+            ]);
 
-        return new Promise(resolve => {
-            GM_xmlhttpRequest({
-                method: "GET",
-                url: url,
-                headers: { "rentry-auth": CONFIG.RENTRY_AUTH_TOKEN },
-                onload: function(response) {
-                    try {
-                        const data = JSON.parse(response.responseText);
-                        const gameEntry = data.find(item => String(item.appid) === String(appId));
-                        resolve(gameEntry || null);
-                    } catch (e) {
-                        console.error("Error parsing rentry data:", e);
-                        resolve(null);
-                    }
-                },
-                onerror: function(error) {
-                    console.error("Error fetching rentry data:", error);
-                    resolve(null);
-                }
-            });
-        });
+            const targetList = isVR ? pcvrList : pcList;
+            const data = JSON.parse(targetList);
+
+            return data.find(item => String(item.appid) === String(appId)) || null;
+        } catch (error) {
+            console.error("Game status check failed:", error);
+            return null; // Fail open
+        }
     }
 
     async function submitToGoogleForms(formData) {
@@ -198,20 +373,70 @@
 
     // Main function
     async function initRequestForm() {
+        // Clear expired cache on script start
+        Object.values(CONFIG.RENTRY_URLS).forEach(url => {
+            if (!RentryCache.get(url)) RentryCache.clear(url);
+        });
+
         if (document.getElementById(CONFIG.FORM_CONTAINER_ID)) return;
 
         const appId = getAppId();
         if (!appId) return;
 
+        const blockCheck = await checkBlockedList();
+        if (blockCheck.isBlocked) {
+            const container = document.createElement('div');
+            container.id = CONFIG.FORM_CONTAINER_ID;
+            container.innerHTML = `
+                <div class="game-blocked">
+                    ${blockCheck.message}
+                </div>
+            `;
+            document.querySelector('.game_area_purchase')?.before(container);
+            return;
+        }
+
         if (hasDenuvo()) {
             const container = document.createElement('div');
             container.id = CONFIG.FORM_CONTAINER_ID;
             container.innerHTML = `<div class="denuvo-blocked">${CONFIG.DENUVO_MESSAGE}</div>`;
-            document.querySelector('.game_area_purchase')?.after(container);
+            document.querySelector('.game_area_purchase')?.before(container);
             return;
         }
 
-        const isVR = isVROnlyGame();
+        if (hasKernelAntiCheat()) {
+            const container = document.createElement('div');
+            container.id = CONFIG.FORM_CONTAINER_ID;
+            container.innerHTML = `<div class="kla-blocked">${CONFIG.KLA_MESSAGE}</div>`;
+            document.querySelector('.game_area_purchase')?.before(container);
+            return;
+        }
+
+        if (hasRockstarDRM()) {
+            const container = document.createElement('div');
+            container.id = CONFIG.FORM_CONTAINER_ID;
+            container.innerHTML = `<div class="rockstar-blocked">${CONFIG.ROCKSTAR_MESSAGE}</div>`;
+            document.querySelector('.game_area_purchase')?.before(container);
+            return;
+        }
+
+        if (hasSecurom()) {
+            const container = document.createElement('div');
+            container.id = CONFIG.FORM_CONTAINER_ID;
+            container.innerHTML = `<div class="securom-blocked">${CONFIG.SECUROM_MESSAGE}</div>`;
+            document.querySelector('.game_area_purchase')?.before(container);
+            return;
+        }
+
+        if (!hasSP()) {
+            const container = document.createElement('div');
+            container.id = CONFIG.FORM_CONTAINER_ID;
+            container.innerHTML = `<div class="notsingleplayer-blocked">${CONFIG.NOTSINGLEPLAYER_MESSAGE}</div>`;
+            document.querySelector('.game_area_purchase')?.before(container);
+            return;
+        }
+
+        const isVR = isVRGame();
         const gameEntry = await checkGameStatus(appId, isVR);
 
         const container = document.createElement('div');
@@ -238,7 +463,7 @@
             <style>${buildIdLinkStyles}</style>
             <h3>ARMGDDN Game Request</h3>
             <div class="game-status">
-                <strong>Game:</strong> ${getGameTitle()}<br>
+                <strong>Game:</strong> ${blockCheck.gameTitle}<br>
                 <strong>Category:</strong> ${isVR ? 'PCVR' : 'PC'}<br>
                 <strong>Status:</strong> ${statusMessage}
             </div>
@@ -248,7 +473,7 @@
             <div id="${CONFIG.MESSAGE_AREA_ID}"></div>
         `;
 
-        document.querySelector('.game_area_purchase')?.after(container);
+        document.querySelector('.game_area_purchase')?.before(container);
 
         // Form handling
         const telegramInput = document.getElementById(CONFIG.TELEGRAM_INPUT_ID);
