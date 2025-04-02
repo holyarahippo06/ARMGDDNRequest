@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.6.8
+// @version      2.6.9
 // @description  Game Request Form for ARMGDDN Games on Steam and Alyx Workshop Mods
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
@@ -44,7 +44,8 @@
                 gameTitle: "entry.710747250",
                 category: "entry.1983323798",
                 gameUrl: "entry.423482615",
-                status: "entry.1581471918"
+                status: "entry.1581471918",
+                infos: "entry.1510033831"
             },
             STYLES: `
                 #steam-request-helper {
@@ -484,6 +485,7 @@
                     formData.append(CONFIG.FORM_FIELDS.category, 'Alyx Mod');
                     formData.append(CONFIG.FORM_FIELDS.gameUrl, window.location.href);
                     formData.append(CONFIG.FORM_FIELDS.status, 'I forgot to check.../I enjoy wasting time!');
+                    formData.append(CONFIG.FORM_FIELDS.infos, 'I am abusing the system.');
 
                     await submitToGoogleForms(formData);
                     messageArea.textContent = "✓ Request submitted successfully!";
@@ -628,6 +630,7 @@
                 formData.append(CONFIG.FORM_FIELDS.category, isVR ? 'PCVR' : 'PC');
                 formData.append(CONFIG.FORM_FIELDS.gameUrl, window.location.href.split('?')[0]);
                 formData.append(CONFIG.FORM_FIELDS.status, gameEntry ? 'Already on server, but needs an update' : 'New to server');
+                formData.append(CONFIG.FORM_FIELDS.status, 'I am abusing the system.');
 
                 await submitToGoogleForms(formData);
                 messageArea.textContent = "✓ Request submitted successfully!";
