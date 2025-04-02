@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.6.5
+// @version      2.6.6
 // @description  Game Request Form for ARMGDDN Games on Steam
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
@@ -26,6 +26,7 @@
             ROCKSTAR_MESSAGE: "This Game has Rockstar's DRM and cannot be requested.",
             SECUROM_MESSAGE: "This Game has SecuROM DRM and cannot be requested.",
             NOTSINGLEPLAYER_MESSAGE: "This Game is Online-Only and cannot be requested.",
+            ISFREE_MESSAGE: "This Game is free... Why'd you request this?",
             FORM_CONTAINER_ID: "steam-request-helper",
             TELEGRAM_INPUT_ID: "srh-telegram-input",
             SUBMIT_BUTTON_ID: "srh-submit-button",
@@ -118,6 +119,13 @@
                     border-radius: 3px;
                 }
                 #steam-request-helper .notsingleplayer-blocked {
+                    color: #ff4d4d;
+                    font-weight: bold;
+                    padding: 10px;
+                    background-color: rgba(255, 77, 77, 0.1);
+                    border-radius: 3px;
+                }
+                #steam-request-helper .free-blocked {
                     color: #ff4d4d;
                     font-weight: bold;
                     padding: 10px;
@@ -250,11 +258,12 @@
     }
 
     function hasSP() {
-        const spLabel = document.querySelectorAll('.game_area_details_specs_ctn .label');
-        return Array.from(spLabel).some(label => {
-            const text = label.textContent.toLowerCase();
-            return text.includes('single-player');
-        });
+        const singlePlayerIcons = document.querySelectorAll('.category_icon[src*="ico_singlePlayer.png"]');
+        return singlePlayerIcons.length > 0;
+    }
+
+    function isFreeGame() {
+        return !!document.getElementById('freeGameBtn');
     }
 
     function isVRGame() {
@@ -432,6 +441,14 @@
             const container = document.createElement('div');
             container.id = CONFIG.FORM_CONTAINER_ID;
             container.innerHTML = `<div class="notsingleplayer-blocked">${CONFIG.NOTSINGLEPLAYER_MESSAGE}</div>`;
+            document.querySelector('.game_area_purchase')?.before(container);
+            return;
+        }
+
+        if (isFreeGame()) {
+            const container = document.createElement('div');
+            container.id = CONFIG.FORM_CONTAINER_ID;
+            container.innerHTML = `<div class="free-blocked">${CONFIG.ISFREE_MESSAGE}</div>`;
             document.querySelector('.game_area_purchase')?.before(container);
             return;
         }
