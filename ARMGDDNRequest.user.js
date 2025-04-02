@@ -1,7 +1,9 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    http://tampermonkey.net/
-// @version      2.6
+// @version      2.6.1
+// @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
+// @downloadURL  https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
 // @description  Game Request Form for ARMGDDN Games on Steam
 // @author       ARMGDDN Games
 // @match        *://store.steampowered.com/app/*
