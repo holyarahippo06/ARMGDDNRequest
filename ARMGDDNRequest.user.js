@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.6.6
+// @version      2.6.7
 // @description  Game Request Form for ARMGDDN Games on Steam
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
@@ -267,17 +267,8 @@
     }
 
     function isVRGame() {
-        const vrLabels = document.querySelectorAll('.game_area_details_specs_ctn .label');
-        console.log("VR Labels found:", vrLabels.length);
-
-        const isVR = Array.from(vrLabels).some(label => {
-            const text = label.textContent.trim().toLowerCase();
-            console.log("Checking label:", text);
-            return text.includes('vr only') || text.includes('vr supported');
-        });
-
-        console.log("Final VR Check Result:", isVR);
-        return isVR;
+        const singlePlayerIcons = document.querySelectorAll('.category_icon[src*="ico_vr_support.png"]');
+        return singlePlayerIcons.length > 0;
     }
 
     function getGameTitle() {
