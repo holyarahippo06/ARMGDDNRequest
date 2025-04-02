@@ -2,8 +2,6 @@
 // @name         ARMGDDN Request
 // @namespace    http://tampermonkey.net/
 // @version      2.6.1
-// @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
-// @downloadURL  https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
 // @description  Game Request Form for ARMGDDN Games on Steam
 // @author       ARMGDDN Games
 // @match        *://store.steampowered.com/app/*
@@ -126,7 +124,11 @@
     }
 
     function getGameTitle() {
-        return document.getElementById('appHubAppName')?.textContent.trim() || "Unknown Title";
+        // New reliable method using breadcrumb
+        const titleElement = document.querySelector('#tabletGrid > div.page_content_ctn > div.page_title_area.game_title_area.page_content > div.breadcrumbs > div.blockbg > a:nth-child(3) > span');
+        return titleElement?.textContent.trim() ||
+               document.getElementById('appHubAppName')?.textContent.trim() ||
+               "Unknown Title";
     }
 
     function getAppId() {
