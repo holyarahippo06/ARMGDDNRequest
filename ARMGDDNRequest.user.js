@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.6.3
+// @version      2.6.4
 // @description  Game Request Form for ARMGDDN Games on Steam
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
@@ -126,11 +126,13 @@
     }
 
     function getGameTitle() {
-        // New reliable method using breadcrumb
-        const titleElement = document.querySelector('#tabletGrid > div.page_content_ctn > div.page_title_area.game_title_area.page_content > div.breadcrumbs > div.blockbg > a:nth-child(3) > span');
-        return titleElement?.textContent.trim() ||
-               document.getElementById('appHubAppName')?.textContent.trim() ||
-               "Unknown Title";
+        // Get from breadcrumbs (most reliable)
+        const breadcrumbTitle = document.querySelector('.breadcrumbs .blockbg a:last-child span[itemprop="name"]');
+        if (breadcrumbTitle) return breadcrumbTitle.textContent.trim();
+
+        // Fallback to appHubAppName
+        const titleElement = document.getElementById('appHubAppName');
+        return titleElement?.textContent.trim() || "Unknown Title";
     }
 
     function getAppId() {
