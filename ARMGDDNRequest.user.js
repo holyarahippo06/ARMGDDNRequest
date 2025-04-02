@@ -1,12 +1,13 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.6.7
-// @description  Game Request Form for ARMGDDN Games on Steam
+// @version      2.6.8
+// @description  Game Request Form for ARMGDDN Games on Steam and Alyx Workshop Mods
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
 // @downloadURL  https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
 // @match        *://store.steampowered.com/app/*
+// @match        *://steamcommunity.com/sharedfiles/filedetails/*
 // @grant        GM_xmlhttpRequest
 // @icon         https://lemmy.dbzer0.com/pictrs/image/67148ef4-6e17-4bfd-9151-355333c6a5e1.png
 // @connect      rentry.co
@@ -149,6 +150,13 @@
                     font-size: 0.9em;
                     margin-top: 10px;
                 }
+                .build-id-link {
+                    color: #66c0f4;
+                    text-decoration: none;
+                }
+                .build-id-link:hover {
+                    text-decoration: underline;
+                }
             `
         };
     })();
@@ -219,7 +227,6 @@
         return fetchPromise;
     }
 
-
     // Add styles
     const style = document.createElement('style');
     style.textContent = CONFIG.STYLES;
@@ -272,6 +279,12 @@
     }
 
     function getGameTitle() {
+        // Check if we're on a workshop page first
+        if (window.location.href.includes('steamcommunity.com/sharedfiles/filedetails')) {
+            const titleElement = document.querySelector('.workshopItemTitle');
+            return titleElement?.textContent.trim() || "Unknown Workshop Item";
+        }
+
         // Get from breadcrumbs (most reliable)
         const breadcrumbTitle = document.querySelector('.breadcrumbs .blockbg a:last-child span[itemprop="name"]');
         if (breadcrumbTitle) return breadcrumbTitle.textContent.trim();
@@ -279,6 +292,22 @@
         // Fallback to appHubAppName
         const titleElement = document.getElementById('appHubAppName');
         return titleElement?.textContent.trim() || "Unknown Title";
+    }
+
+    function isAlyxWorkshopPage() {
+        if (!window.location.href.includes('steamcommunity.com/sharedfiles/filedetails')) {
+            return false;
+        }
+
+        const breadcrumbs = document.querySelector('.breadcrumbs');
+        if (!breadcrumbs) return false;
+
+        const alyxLink = Array.from(breadcrumbs.querySelectorAll('a')).find(a =>
+            a.href === 'https://steamcommunity.com/app/546560' ||
+            a.href === 'http://steamcommunity.com/app/546560'
+        );
+
+        return !!alyxLink;
     }
 
     async function checkBlockedList() {
@@ -320,6 +349,10 @@
     }
 
     function getAppId() {
+        if (window.location.href.includes('steamcommunity.com/sharedfiles/filedetails')) {
+            return '546560'; // Hardcoded for Alyx workshop items
+        }
+
         const match = window.location.href.match(/app\/(\d+)/);
         return match ? match[1] : null;
     }
@@ -383,6 +416,93 @@
         const appId = getAppId();
         if (!appId) return;
 
+        // Special handling for Alyx workshop pages
+        if (isAlyxWorkshopPage()) {
+            const blockCheck = await checkBlockedList();
+            if (blockCheck.isBlocked) {
+                const container = document.createElement('div');
+                container.id = CONFIG.FORM_CONTAINER_ID;
+                container.innerHTML = `
+                    <div class="game-blocked">
+                        ${blockCheck.message}
+                    </div>
+                `;
+                document.querySelector('.game_area_purchase_game')?.before(container);
+                return;
+            }
+
+            const container = document.createElement('div');
+            container.id = CONFIG.FORM_CONTAINER_ID;
+            container.innerHTML = `
+                <h3>ARMGDDN Alyx Mod Request</h3>
+                <div class="game-status">
+                    <strong>Mod:</strong> ${blockCheck.gameTitle}<br>
+                    <strong>Category:</strong> Alyx Mods</br>
+                </div>
+                <label for="${CONFIG.TELEGRAM_INPUT_ID}">Telegram @:</label>
+                <input type="text" id="${CONFIG.TELEGRAM_INPUT_ID}" placeholder="@YourUsername">
+                <button id="${CONFIG.SUBMIT_BUTTON_ID}">Submit Request</button>
+                <div id="${CONFIG.MESSAGE_AREA_ID}"></div>
+            `;
+
+            document.querySelector('.game_area_purchase_game')?.before(container);
+
+            // Form handling
+            const telegramInput = document.getElementById(CONFIG.TELEGRAM_INPUT_ID);
+            const submitButton = document.getElementById(CONFIG.SUBMIT_BUTTON_ID);
+            const messageArea = document.getElementById(CONFIG.MESSAGE_AREA_ID);
+
+            function updateSubmitButton() {
+                submitButton.disabled = !!validateTelegramHandle(telegramInput.value);
+            }
+
+            telegramInput.addEventListener('input', () => {
+                const error = validateTelegramHandle(telegramInput.value);
+                messageArea.textContent = error || '';
+                messageArea.className = error ? 'error-message' : '';
+                updateSubmitButton();
+            });
+
+            submitButton.addEventListener('click', async () => {
+                const telegramHandle = telegramInput.value.trim();
+                const error = validateTelegramHandle(telegramHandle);
+
+                if (error) {
+                    messageArea.textContent = error;
+                    messageArea.className = 'error-message';
+                    return;
+                }
+
+                submitButton.disabled = true;
+                messageArea.textContent = "Submitting...";
+                messageArea.className = '';
+
+                try {
+                    const formData = new URLSearchParams();
+                    formData.append(CONFIG.FORM_FIELDS.telegram, telegramHandle);
+                    formData.append(CONFIG.FORM_FIELDS.gameTitle, getGameTitle());
+                    formData.append(CONFIG.FORM_FIELDS.category, 'Alyx Mod');
+                    formData.append(CONFIG.FORM_FIELDS.gameUrl, window.location.href);
+                    formData.append(CONFIG.FORM_FIELDS.status, 'I forgot to check.../I enjoy wasting time!');
+
+                    await submitToGoogleForms(formData);
+                    messageArea.textContent = "✓ Request submitted successfully!";
+                    messageArea.className = 'success-message';
+                    telegramInput.value = '';
+                } catch (error) {
+                    console.error("Submission error:", error);
+                    messageArea.textContent = "Failed to submit request. Please try again later.";
+                    messageArea.className = 'error-message';
+                } finally {
+                    submitButton.disabled = false;
+                }
+            });
+
+            updateSubmitButton();
+            return;
+        }
+
+        // Original store page handling
         const blockCheck = await checkBlockedList();
         if (blockCheck.isBlocked) {
             const container = document.createElement('div');
@@ -456,19 +576,7 @@
             ? `Already on server (Current version: <a href="https://steamdb.info/patchnotes/${buildId}" target="_blank" class="build-id-link">${buildId}</a>)`
             : "New to server";
 
-        // Add this to your STYLES:
-        const buildIdLinkStyles = `
-            .build-id-link {
-                color: #66c0f4;
-                text-decoration: none;
-            }
-            .build-id-link:hover {
-                text-decoration: underline;
-            }
-        `;
-
         container.innerHTML = `
-            <style>${buildIdLinkStyles}</style>
             <h3>ARMGDDN Game Request</h3>
             <div class="game-status">
                 <strong>Game:</strong> ${blockCheck.gameTitle}<br>
