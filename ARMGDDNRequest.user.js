@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.6.11
+// @version      2.6.12
 // @description  Game Request Form for ARMGDDN Games on Steam and Alyx Workshop Mods
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
@@ -500,7 +500,7 @@
                     formData.append(CONFIG.FORM_FIELDS.gameTitle, getGameTitle());
                     formData.append(CONFIG.FORM_FIELDS.category, 'Alyx Mod');
                     formData.append(CONFIG.FORM_FIELDS.gameUrl, window.location.href);
-                    formData.append(CONFIG.FORM_FIELDS.status, 'I forgot to check.../I enjoy wasting time!');
+                    formData.append(CONFIG.FORM_FIELDS.status, 'Unable to check');
                     formData.append(CONFIG.FORM_FIELDS.infos, 'I am abusing the system.');
 
                     await submitToGoogleForms(formData);
