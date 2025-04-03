@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.6.10
+// @version      2.6.11
 // @description  Game Request Form for ARMGDDN Games on Steam and Alyx Workshop Mods
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
@@ -654,7 +654,7 @@
                 formData.append(CONFIG.FORM_FIELDS.category, isVR ? 'PCVR' : 'PC');
                 formData.append(CONFIG.FORM_FIELDS.gameUrl, window.location.href.split('?')[0]);
                 formData.append(CONFIG.FORM_FIELDS.status, gameEntry ? 'Already on server, but needs an update' : 'New to server');
-                formData.append(CONFIG.FORM_FIELDS.status, 'I am abusing the system.');
+                formData.append(CONFIG.FORM_FIELDS.infos, 'I am abusing the system.');
 
                 await submitToGoogleForms(formData);
                 messageArea.textContent = "✓ Request submitted successfully!";
