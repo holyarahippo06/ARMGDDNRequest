@@ -1,6 +1,6 @@
 # ARMGDDNRequest
 
-This is the official ARMGDDN Games Request Userscript, utilizing Tampermonkey. (Violentmonkey has been tested and works too. Greasemonkey might work too, hasn't been tested yet though.)
+This is the official ARMGDDN Games Request Userscript, utilizing Tampermonkey. ([Violentmonkey](https://violentmonkey.github.io/get-it/) has been tested and works too. Greasemonkey might work too, hasn't been tested yet though.)
 
 ## How to install
 
