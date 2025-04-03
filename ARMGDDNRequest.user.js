@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.6.9
+// @version      2.6.10
 // @description  Game Request Form for ARMGDDN Games on Steam and Alyx Workshop Mods
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
@@ -28,6 +28,7 @@
             SECUROM_MESSAGE: "This Game has SecuROM DRM and cannot be requested.",
             NOTSINGLEPLAYER_MESSAGE: "This Game is Online-Only and cannot be requested.",
             ISFREE_MESSAGE: "This Game is free... Why'd you request this?",
+            EARLY_MESSAGE: "This Game is not requestable. Wait until it has been released to request it.",
             FORM_CONTAINER_ID: "steam-request-helper",
             TELEGRAM_INPUT_ID: "srh-telegram-input",
             SUBMIT_BUTTON_ID: "srh-submit-button",
@@ -128,6 +129,13 @@
                     border-radius: 3px;
                 }
                 #steam-request-helper .free-blocked {
+                    color: #ff4d4d;
+                    font-weight: bold;
+                    padding: 10px;
+                    background-color: rgba(255, 77, 77, 0.1);
+                    border-radius: 3px;
+                }
+                #steam-request-helper .early-blocked {
                     color: #ff4d4d;
                     font-weight: bold;
                     padding: 10px;
@@ -272,6 +280,14 @@
 
     function isFreeGame() {
         return !!document.getElementById('freeGameBtn');
+    }
+
+    function isNotReleased() {
+        // Get element with the class "game_area_comingsoon"
+        const element = document.querySelector(".game_area_comingsoon");
+
+        // Check if the element exists and contains a descendant with the class "not_yet"
+        return element && element.querySelector(".not_yet") !== null;
     }
 
     function isVRGame() {
@@ -562,6 +578,14 @@
             const container = document.createElement('div');
             container.id = CONFIG.FORM_CONTAINER_ID;
             container.innerHTML = `<div class="free-blocked">${CONFIG.ISFREE_MESSAGE}</div>`;
+            document.querySelector('.game_area_purchase')?.before(container);
+            return;
+        }
+
+        if (isNotReleased()) {
+            const container = document.createElement('div');
+            container.id = CONFIG.FORM_CONTAINER_ID;
+            container.innerHTML = `<div class="early-blocked">${CONFIG.EARLY_MESSAGE}</div>`;
             document.querySelector('.game_area_purchase')?.before(container);
             return;
         }
