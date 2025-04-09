@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.6.12
+// @version      2.6.13
 // @description  Game Request Form for ARMGDDN Games on Steam and Alyx Workshop Mods
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
@@ -29,6 +29,7 @@
             NOTSINGLEPLAYER_MESSAGE: "This Game is Online-Only and cannot be requested.",
             ISFREE_MESSAGE: "This Game is free... Why'd you request this?",
             EARLY_MESSAGE: "This Game is not requestable. Wait until it has been released to request it.",
+            LATEST_VERSION_MESSAGE: "This Game is already on the latest version on the server. No update needed.",
             FORM_CONTAINER_ID: "steam-request-helper",
             TELEGRAM_INPUT_ID: "srh-telegram-input",
             SUBMIT_BUTTON_ID: "srh-submit-button",
@@ -38,6 +39,8 @@
             RENTRY_URLS: {
                 PC: hexToString([0x68,0x74,0x74,0x70,0x73,0x3a,0x2f,0x2f,0x72,0x65,0x6e,0x74,0x72,0x79,0x2e,0x63,0x6f,0x2f,0x63,0x75,0x72,0x72,0x65,0x6e,0x74,0x73,0x65,0x72,0x76,0x65,0x72,0x70,0x63,0x2f,0x72,0x61,0x77]),
                 PCVR: hexToString([0x68,0x74,0x74,0x70,0x73,0x3a,0x2f,0x2f,0x72,0x65,0x6e,0x74,0x72,0x79,0x2e,0x63,0x6f,0x2f,0x63,0x75,0x72,0x72,0x65,0x6e,0x74,0x73,0x65,0x72,0x76,0x65,0x72,0x70,0x63,0x76,0x72,0x2f,0x72,0x61,0x77]),
+                PC_UPDATES: hexToString([0x68,0x74,0x74,0x70,0x73,0x3a,0x2f,0x2f,0x72,0x65,0x6e,0x74,0x72,0x79,0x2e,0x63,0x6f,0x2f,0x75,0x70,0x64,0x61,0x74,0x65,0x70,0x63,0x2f,0x72,0x61,0x77]),
+                PCVR_UPDATES: hexToString([0x68,0x74,0x74,0x70,0x73,0x3a,0x2f,0x2f,0x72,0x65,0x6e,0x74,0x72,0x79,0x2e,0x63,0x6f,0x2f,0x75,0x70,0x64,0x61,0x74,0x65,0x70,0x63,0x76,0x72,0x2f,0x72,0x61,0x77]),
                 BLOCKED: hexToString([0x68,0x74,0x74,0x70,0x73,0x3a,0x2f,0x2f,0x72,0x65,0x6e,0x74,0x72,0x79,0x2e,0x63,0x6f,0x2f,0x61,0x67,0x72,0x62,0x6c,0x2f,0x72,0x61,0x77])
             },
             FORM_FIELDS: {
@@ -136,6 +139,13 @@
                     border-radius: 3px;
                 }
                 #steam-request-helper .early-blocked {
+                    color: #ff4d4d;
+                    font-weight: bold;
+                    padding: 10px;
+                    background-color: rgba(255, 77, 77, 0.1);
+                    border-radius: 3px;
+                }
+                #steam-request-helper .latest-version-blocked {
                     color: #ff4d4d;
                     font-weight: bold;
                     padding: 10px;
@@ -283,10 +293,7 @@
     }
 
     function isNotReleased() {
-        // Get element with the class "game_area_comingsoon"
         const element = document.querySelector(".game_area_comingsoon");
-
-        // Check if the element exists and contains a descendant with the class "not_yet"
         return element && element.querySelector(".not_yet") !== null;
     }
 
@@ -296,17 +303,14 @@
     }
 
     function getGameTitle() {
-        // Check if we're on a workshop page first
         if (window.location.href.includes('steamcommunity.com/sharedfiles/filedetails')) {
             const titleElement = document.querySelector('.workshopItemTitle');
             return titleElement?.textContent.trim() || "Unknown Workshop Item";
         }
 
-        // Get from breadcrumbs (most reliable)
         const breadcrumbTitle = document.querySelector('.breadcrumbs .blockbg a:last-child span[itemprop="name"]');
         if (breadcrumbTitle) return breadcrumbTitle.textContent.trim();
 
-        // Fallback to appHubAppName
         const titleElement = document.getElementById('appHubAppName');
         return titleElement?.textContent.trim() || "Unknown Title";
     }
@@ -338,13 +342,11 @@
             const isBlocked = blockedEntries.some(entry => {
                 const cleanEntry = entry.trim().toLowerCase();
 
-                // Exact match syntax: ^game title$
                 if (cleanEntry.startsWith('^') && cleanEntry.endsWith('$')) {
                     const exactMatch = cleanEntry.slice(1, -1);
                     return gameTitleLow === exactMatch;
                 }
 
-                // Series match (partial contains)
                 return gameTitleLow.includes(cleanEntry);
             });
 
@@ -394,7 +396,27 @@
             return data.find(item => String(item.appid) === String(appId)) || null;
         } catch (error) {
             console.error("Game status check failed:", error);
-            return null; // Fail open
+            return null;
+        }
+    }
+
+    async function checkGameUpdates(appId, isVR, gameTitle) {
+        try {
+            const updateUrl = isVR ? CONFIG.RENTRY_URLS.PCVR_UPDATES : CONFIG.RENTRY_URLS.PC_UPDATES;
+            const updateList = await cachedFetchWithRetry(updateUrl);
+
+            if (!updateList) return false;
+
+            // Prepare game title for matching (replace : with - and escape special regex chars)
+            const escapedTitle = gameTitle.replace(/:/g, ' -').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            // Create regex pattern to match exact game title followed by version number
+            const pattern = new RegExp(`^${escapedTitle}\\s+v\\d+`, 'i');
+
+            const updateEntries = updateList.split('\n').filter(e => e.trim());
+            return updateEntries.some(entry => pattern.test(entry));
+        } catch (error) {
+            console.error("Game update check failed:", error);
+            return false;
         }
     }
 
@@ -591,7 +613,20 @@
         }
 
         const isVR = isVRGame();
+        const gameTitle = getGameTitle();
         const gameEntry = await checkGameStatus(appId, isVR);
+
+        // If game is on server, check if it's in the updates list
+        if (gameEntry) {
+            const needsUpdate = await checkGameUpdates(appId, isVR, gameTitle);
+            if (!needsUpdate) {
+                const container = document.createElement('div');
+                container.id = CONFIG.FORM_CONTAINER_ID;
+                container.innerHTML = `<div class="latest-version-blocked">${CONFIG.LATEST_VERSION_MESSAGE}</div>`;
+                document.querySelector('.game_area_purchase')?.before(container);
+                return;
+            }
+        }
 
         const container = document.createElement('div');
         container.id = CONFIG.FORM_CONTAINER_ID;
@@ -605,7 +640,7 @@
         container.innerHTML = `
             <h3>ARMGDDN Game Request</h3>
             <div class="game-status">
-                <strong>Game:</strong> ${blockCheck.gameTitle}<br>
+                <strong>Game:</strong> ${gameTitle}<br>
                 <strong>Category:</strong> ${isVR ? 'PCVR' : 'PC'}<br>
                 <strong>Status:</strong> ${statusMessage}
             </div>
@@ -650,7 +685,7 @@
             try {
                 const formData = new URLSearchParams();
                 formData.append(CONFIG.FORM_FIELDS.telegram, telegramHandle);
-                formData.append(CONFIG.FORM_FIELDS.gameTitle, getGameTitle());
+                formData.append(CONFIG.FORM_FIELDS.gameTitle, gameTitle);
                 formData.append(CONFIG.FORM_FIELDS.category, isVR ? 'PCVR' : 'PC');
                 formData.append(CONFIG.FORM_FIELDS.gameUrl, window.location.href.split('?')[0]);
                 formData.append(CONFIG.FORM_FIELDS.status, gameEntry ? 'Already on server, but needs an update' : 'New to server');
