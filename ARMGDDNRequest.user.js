@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.7.2
+// @version      2.7.3
 // @description  Game Request Form for ARMGDDN Games on Steam and Alyx Workshop Mods
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
@@ -420,19 +420,22 @@
         }
     }
 
-    function checkGameUpdates(isVR, gameTitle, pcUpdateList, pcvrUpdateList) {
+    function checkGameUpdates(isVR, gameEntry, pcUpdateList, pcvrUpdateList) {
         try {
             const updateList = isVR ? pcvrUpdateList : pcUpdateList;
+            if (!updateList || !gameEntry?.foldername) return false;
 
-            if (!updateList) return false;
+            // Extract build ID from the game entry (format is usually "v12345678")
+            const currentBuildId = gameEntry.foldername.match(/v(\d+)/)?.[1];
+            if (!currentBuildId) return false;
 
-            // Prepare game title for matching (replace : with - and escape special regex chars)
-            const escapedTitle = gameTitle.replace(/:/g, ' -').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            // Create regex pattern to match exact game title followed by version number
-            const pattern = new RegExp(`^${escapedTitle}\\s+v\\d+`, 'i');
-
+            // Check if any update entry contains this build ID
             const updateEntries = updateList.split('\n').filter(e => e.trim());
-            return updateEntries.some(entry => pattern.test(entry));
+            return updateEntries.some(entry => {
+                // Update entries format: "Game Name v12345678 -ARMGDDN"
+                const updateBuildId = entry.match(/v(\d+)/)?.[1];
+                return updateBuildId === currentBuildId;
+            });
         } catch (error) {
             console.error("Game update check failed:", error);
             return false;
@@ -675,7 +678,7 @@
 
             // If game is on server, check if it's in the updates list
             if (gameEntry) {
-                const needsUpdate = await checkGameUpdates(isVR, gameTitle, pcUpdateList, pcvrUpdateList);
+                const needsUpdate = await checkGameUpdates(isVR, gameEntry, pcUpdateList, pcvrUpdateList);
                 if (!needsUpdate) {
                     showBlockedMessage(CONFIG.LATEST_VERSION_MESSAGE, "latest-version-blocked");
                     return;
