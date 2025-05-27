@@ -312,9 +312,11 @@
         return !!document.querySelector('.game_area_dlc_bubble');
     }
 
-    function isNotReleased() {
-        const element = document.querySelector(".game_area_comingsoon");
-        return element && element.querySelector(".not_yet") !== null;
+    function isReleased() {
+        const commingSoonElement = document.querySelector(".game_area_comingsoon");
+        
+        if (commingSoonElement && !commingSoonElement.hidden) return false
+        return true
     }
 
     function isVRGame(appID, pcvrList) {
@@ -662,7 +664,7 @@
                 return;
             }
 
-            if (isNotReleased()) {
+            if (!isReleased()) {
                 showBlockedMessage(CONFIG.EARLY_MESSAGE, "early-blocked");
                 return;
             }
