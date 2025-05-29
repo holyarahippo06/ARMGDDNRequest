@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ARMGDDN Request
 // @namespace    https://github.com/holyarahippo06/ARMGDDNRequest
-// @version      2.7.4
+// @version      2.7.5
 // @description  Game Request Form for ARMGDDN Games on Steam and Alyx Workshop Mods
 // @author       ARMGDDN Games
 // @updateURL    https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true
@@ -12,6 +12,7 @@
 // @icon         https://lemmy.dbzer0.com/pictrs/image/67148ef4-6e17-4bfd-9151-355333c6a5e1.png
 // @connect      rentry.co
 // @connect      docs.google.com
+// @connect      api.steamcmd.net
 // ==/UserScript==
 
 (function() {
@@ -31,6 +32,7 @@
             DLC_MESSAGE: "DLCs are unrequestable. All available and to-be-added games come with DLCs, if the version we have was released after the DLC.",
             LATEST_VERSION_MESSAGE: "This Game is already on the latest version on the server. No update needed.",
             CACHE_ERROR_MESSAGE: "Failed to load required data. Ensure you can access rentry.co then please refresh this page. Contact support if this issue continues: https://t.me/ARMGDDNGames",
+            DUPE_REQUEST_MESSAGE: "You already requested this game. Wait for an update to request it again.",
             FORM_CONTAINER_ID: "steam-request-helper",
             TELEGRAM_INPUT_ID: "srh-telegram-input",
             SUBMIT_BUTTON_ID: "srh-submit-button",
@@ -97,6 +99,12 @@
                     border-radius: 3px;
                     cursor: pointer;
                     font-weight: bold;
+                }
+                #steam-request-helper button:disabled {
+                    background-color: #4a4a4a !important;
+                    color: #888888 !important;
+                    cursor: not-allowed !important;
+                    opacity: 0.6;
                 }
                 #steam-request-helper .denuvo-blocked {
                     color: #ff4d4d;
@@ -407,7 +415,15 @@
     function validateTelegramHandle(handle) {
         if (!handle) return "Telegram @ cannot be empty";
         if (!handle.startsWith('@')) return "Must start with @";
-        if (handle.length < 2) return "Too short";
+
+        const username = handle.slice(1);
+        if (username.length < 5) return "Username too short";
+        if (username.length > 32) return "Username too long";
+
+        const validCharsPattern = /^[a-zA-Z0-9_]+$/;
+        if (!validCharsPattern.test(username)) return "Invalid username - only letters, numbers, and underscores allowed";
+
+        if (!/[a-zA-Z]/.test(username)) return "Username must contain at least one letter";
         return null;
     }
 
@@ -467,7 +483,52 @@
         });
     }
 
-    function createForm(type, category, title, statusMessage, gameEntry, isVR) {
+    async function getLatestBuildId(appId) {
+        try {
+            const response = await new Promise((resolve, reject) => {
+                GM_xmlhttpRequest({
+                    method: "GET",
+                    url: `https://api.steamcmd.net/v1/info/${appId}`,
+                    timeout: 10000,
+                    onload: function(response) {
+                        if (response.status === 200) {
+                            resolve(JSON.parse(response.responseText));
+                        } else {
+                            reject(new Error(`SteamCMD API failed with status ${response.status}`));
+                        }
+                    },
+                    onerror: reject
+                });
+            });
+
+            // Extract build ID from public branch
+            const publicBranch = response.data?.[appId]?.depots?.branches?.public;
+            if (publicBranch && publicBranch.buildid) {
+                return publicBranch.buildid;
+            }
+
+            return null;
+        } catch (error) {
+            console.warn("AGRequests: Failed to get latest build ID:", error);
+            return null;
+        }
+    }
+
+    function createSubmissionKey(appId, gameEntry, latestBuildId) {
+        const currentBuildId = gameEntry?.foldername.match(/v(\d+)/)?.[1];
+
+        if (!currentBuildId) {
+            return latestBuildId ? `submitted_${appId}_${latestBuildId}` : `submitted_${appId}_new`;
+        }
+
+        if (latestBuildId && latestBuildId !== currentBuildId) {
+            return `submitted_${appId}_${latestBuildId}`;
+        }
+
+        return `submitted_${appId}_${currentBuildId}`;
+    }
+
+    function createForm(type, category, title, submissionKey, statusMessage, gameEntry, isVR) {
         const container = document.createElement('div');
         container.id = CONFIG.FORM_CONTAINER_ID;
 
@@ -480,6 +541,9 @@
             </div>
             <label for="${CONFIG.TELEGRAM_INPUT_ID}">Telegram @:</label>
             <input type="text" id="${CONFIG.TELEGRAM_INPUT_ID}" placeholder="@YourUsername">
+            <small style="color: #888; font-size: 0.85em; display: block; margin-bottom: 10px;">
+                Enter your username (starts with @), not your display name or phone number!<br>Find this in Telegram Settings > Username
+            </small>
             <button id="${CONFIG.SUBMIT_BUTTON_ID}">Submit Request</button>
             <div id="${CONFIG.MESSAGE_AREA_ID}"></div>
         `;
@@ -490,29 +554,46 @@
         const submitButton = document.getElementById(CONFIG.SUBMIT_BUTTON_ID);
         const messageArea = document.getElementById(CONFIG.MESSAGE_AREA_ID);
 
-        function updateSubmitButton() {
-            submitButton.disabled = !!validateTelegramHandle(telegramInput.value);
-        }
-
         telegramInput.addEventListener('input', () => {
             const error = validateTelegramHandle(telegramInput.value);
-            messageArea.textContent = error || '';
-            messageArea.className = error ? 'error-message' : '';
-            updateSubmitButton();
+
+            if (error) {
+                messageArea.textContent = error;
+                messageArea.className = 'error-message';
+                submitButton.disabled = true;
+            } else {
+                if (localStorage.getItem(submissionKey)) {
+                    messageArea.textContent = CONFIG.DUPE_REQUEST_MESSAGE;
+                    messageArea.className = 'game-blocked';
+                    submitButton.disabled = true;
+                    return;
+                }
+
+                messageArea.textContent = '';
+                messageArea.className = '';
+                submitButton.disabled = false;
+            }
         });
 
         submitButton.addEventListener('click', async () => {
+            submitButton.disabled = true;
+            submitButton.textContent = "Submitting...";
+
             const telegramHandle = telegramInput.value.trim();
             const error = validateTelegramHandle(telegramHandle);
 
             if (error) {
                 messageArea.textContent = error;
                 messageArea.className = 'error-message';
+                submitButton.disabled = false;
+                submitButton.textContent = "Submit Request";
                 return;
             }
 
-            submitButton.disabled = true;
+            localStorage.setItem(submissionKey, 'true');
+
             messageArea.textContent = "Submitting...";
+            messageArea.className = '';
 
             try {
                 const formData = new URLSearchParams();
@@ -525,17 +606,17 @@
                 await submitToGoogleForms(formData);
                 messageArea.textContent = "✓ Request submitted successfully!";
                 messageArea.className = 'success-message';
-                telegramInput.value = '';
+                submitButton.textContent = "Request Submitted";
+                telegramInput.disabled = true;
             } catch (error) {
                 console.error("Submission error:", error);
                 messageArea.textContent = "Failed to submit request. Please try again later.";
                 messageArea.className = 'error-message';
-            } finally {
+                localStorage.removeItem(submissionKey);
                 submitButton.disabled = false;
+                submitButton.textContent = "Submit Request";
             }
         });
-
-        updateSubmitButton();
     }
 
     // Main function
@@ -629,7 +710,15 @@
 
             // Special handling for Alyx workshop pages
             if (isAlyxWorkshopPage()) {
-                createForm("Alyx Mod", "Alyx Mods", blockCheck.gameTitle);
+                const match = window.location.href.match(/id=(\d+)/);
+                const modID = match[1];
+
+                const submissionKey = `submitted_${modID}`;
+                if (localStorage.getItem(submissionKey)) {
+                    showBlockedMessage(CONFIG.DUPE_REQUEST_MESSAGE, "game-blocked");
+                    return;
+                }
+                createForm("Alyx Mod", "Alyx Mods", blockCheck.gameTitle, submissionKey);
                 return;
             }
 
@@ -675,7 +764,6 @@
             }
 
             const isVR = isVRGame(appId, pcvrList);
-            const gameTitle = blockCheck.gameTitle
             const gameEntry = await checkGameStatus(appId, isVR, pcList, pcvrList);
 
             // If game is on server, check if it's in the updates list
@@ -687,6 +775,19 @@
                 }
             }
 
+            let latestBuildId = null;
+            try {
+                latestBuildId = await getLatestBuildId(appId);
+            } catch (error) {
+                console.warn("AGRequests: Could not fetch latest build ID");
+            }
+
+            const submissionKey = createSubmissionKey(appId, gameEntry, latestBuildId);
+            if (localStorage.getItem(submissionKey)) {
+                showBlockedMessage(CONFIG.DUPE_REQUEST_MESSAGE, "game-blocked");
+                return;
+            }
+
             const container = document.createElement('div');
             container.id = CONFIG.FORM_CONTAINER_ID;
 
@@ -695,7 +796,7 @@
                 ? `Already on server (Current version: <a href="https://steamdb.info/patchnotes/${buildId}" target="_blank" class="build-id-link">${buildId}</a>)`
                 : "New to server";
 
-            createForm("Game", isVR ? 'PCVR' : 'PC', blockCheck.gameTitle, statusMessage, gameEntry, isVR);
+            createForm("Game", isVR ? 'PCVR' : 'PC', blockCheck.gameTitle, submissionKey, statusMessage, gameEntry, isVR);
             return
         } catch (error) {
             console.error("AGRequests:", error);
