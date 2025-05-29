@@ -2,26 +2,36 @@
 
 This is the official ARMGDDN Games Request Userscript, utilizing Tampermonkey. ([Violentmonkey](https://violentmonkey.github.io/get-it/) has been tested and works too. Greasemonkey might work too, hasn't been tested yet though.)
 
+## Tutorial Video
+
+[Telegram Link](https://t.me/AGBDownload/4972)
+
 ## How to install
 
-To install, you will need the Tampermonkey Browser Extension, which you can find [here](https://www.tampermonkey.net/)
-
+To install, you will need the Tampermonkey Browser Extension, which you can find [here](https://www.tampermonkey.net/).
 
 ![image](https://github.com/user-attachments/assets/3598e1b1-d8e1-47c6-8327-07fdbc08fa0c)
-Make sure to download the REGULAR ONE, not a beta, not a Legacy or classic, just plain Tampermonkey.
 
+Make sure to download the REGULAR ONE, not a beta, not a Legacy or classic, just plain Tampermonkey.
 
 After installing it, click on [this Link](https://github.com/holyarahippo06/ARMGDDNRequest/blob/main/ARMGDDNRequest.user.js?raw=true) to install the Request script.
 
+>**IMPORTANT:**
+>
+>If you use Chrome or Opera (possibly others) as your browser, you will need to enable dev mode before the script will work.
+>Check the video tutorial linked at the top or google it if you aren't sure how to enable dev mode in your browser.
 
 ## How to Use
 
 To use the extension, visit the [steam website](https://store.steampowered.com). Once there, look up a game and enter the page for the specific game.
 
-
 ![image](https://github.com/user-attachments/assets/af9dc4dd-bbe9-4226-a12b-856040d202dd)
+
 There, you'll see a new window right above the "buy" element. Enter your Telegram @ (Assuming you're already in our [Telegram Group](https://t,me/ARMGDDNGames) and hit "Submit Request".
 
+>**Note:**
+>
+>A Telegram @ is your username, not the display name of your profile. Check the video tutorial linked at the top to see how to set one if you don't have one.
 
 ![image](https://github.com/user-attachments/assets/e17d3b38-501a-493e-98b6-a79575f6c514)
 
